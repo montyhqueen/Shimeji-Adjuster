@@ -1,37 +1,47 @@
 ﻿using System.IO;
+using System.Reflection.Emit;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Xml.Linq;
 
 namespace Shimeji_Adjuster
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        string filePath;
-        string shimejiIcon;
-        string shimejiName;
+        string? filePath, shimejiIcon, shimejiName;
         XDocument doc;
-        string? frequency = "";
 
         public MainWindow()
         {
             InitializeComponent();
+            SetUp();
+        }
 
+        public void SetUp()
+        {
             string currentPath = Directory.GetCurrentDirectory();
+            string? frequency = "";
             shimejiIcon = "";
             filePath = "";
             shimejiName = "";
 
             try
             {
+                //--- Set the name for the current Shimeji---//
                 string fullPath = AppContext.BaseDirectory;
-                string cleanPath = Path.GetDirectoryName(fullPath);
+                string? cleanPath = Path.GetDirectoryName(fullPath);
                 shimejiName = Path.GetFileName(cleanPath);
                 lbl_name.Content = shimejiName;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Failed to read current folder.");
+            }
 
+            try
+            {
+                //---Set the icon---//
                 shimejiIcon = currentPath + @"\img\Shimeji\shime1.png";
                 img_shimeji.Source = new BitmapImage(new Uri(shimejiIcon, UriKind.Absolute));
             }
@@ -42,75 +52,26 @@ namespace Shimeji_Adjuster
 
             try
             {
+                XElement? behavior = null;
+
+                //---Load the behaviors file---//
                 filePath = currentPath + @"\conf\behaviors.xml";
                 doc = XDocument.Load(filePath);
 
-                //string behaviorName = "ClimbAlongCeiling";
-                XNamespace ns = "http://www.group-finity.com/Mascot";
                 string behaviorName = "SitDown";
-
-                XElement? behavior = doc
-                .Descendants(ns + "Behavior")
-                .FirstOrDefault(b =>
-                    (string?)b.Attribute("Name") == behaviorName);
-
-                if (behavior == null)
-                {
-                    Console.WriteLine(
-                        $"Behavior '{behaviorName}' was not found.");
-                    return;
-                }
-                frequency = (string?)behavior?.Attribute("Frequency");
-                slider_sittingAnimation.Value = double.Parse(frequency) / 25;
+                behavior = GetBehavior(behaviorName, slider_sittingAnimation);
 
 
                 behaviorName = "ClimbAlongWall";
-
-                behavior = doc
-                .Descendants(ns + "Behavior")
-                .FirstOrDefault(b =>
-                    (string?)b.Attribute("Name") == behaviorName);
-
-                if (behavior == null)
-                {
-                    Console.WriteLine(
-                        $"Behavior '{behaviorName}' was not found.");
-                    return;
-                }
-                frequency = (string?)behavior?.Attribute("Frequency");
-                slider_climb.Value = Double.Parse(frequency) / 25;
+                behavior = GetBehavior(behaviorName, slider_climb);
 
 
                 behaviorName = "PullUpShimeji";
-                behavior = doc
-                .Descendants(ns + "Behavior")
-                .FirstOrDefault(b =>
-                    (string?)b.Attribute("Name") == behaviorName);
-
-                if (behavior == null)
-                {
-                    Console.WriteLine(
-                        $"Behavior '{behaviorName}' was not found.");
-                    return;
-                }
-                frequency = (string?)behavior?.Attribute("Frequency");
-                slider_multiply.Value = Double.Parse(frequency) / 25;
+                behavior = GetBehavior(behaviorName, slider_multiply);
 
 
                 behaviorName = "ThrowIEFromLeft";
-                behavior = doc
-                .Descendants(ns + "Behavior")
-                .FirstOrDefault(b =>
-                    (string?)b.Attribute("Name") == behaviorName);
-
-                if (behavior == null)
-                {
-                    Console.WriteLine(
-                        $"Behavior '{behaviorName}' was not found.");
-                    return;
-                }
-                frequency = (string?)behavior?.Attribute("Frequency");
-                slider_throw.Value = Double.Parse(frequency) / 25;
+                behavior = GetBehavior(behaviorName, slider_misc);
             }
             catch (Exception ex)
             {
@@ -122,6 +83,28 @@ namespace Shimeji_Adjuster
             cLabel.Text = $"Value: {ValueConverter(slider_climb.Value):F0}";
             multLabel.Text = $"Value: {ValueConverter(slider_multiply.Value):F0}";
             mLabel.Text = $"Value: {ValueConverter(slider_misc.Value):F0}";
+        }
+
+        public XElement? GetBehavior(string behaviorName, Slider slider)
+        {
+            XElement? behavior = null;
+            XNamespace ns = "http://www.group-finity.com/Mascot";
+
+            behavior = doc.Descendants(ns + "Behavior")
+                          .FirstOrDefault(b => (string?)b.Attribute("Name") == behaviorName);
+
+            if (behavior == null)
+            {
+                Console.WriteLine(
+                    $"Behavior '{behaviorName}' was not found.");
+            }
+            else
+            {
+                string? frequency = (string?)behavior?.Attribute("Frequency");
+                slider.Value = double.Parse(frequency) / 25;
+            }
+
+            return behavior;
         }
 
         // ----- Setting labels and stuff -----
@@ -154,8 +137,6 @@ namespace Shimeji_Adjuster
             tLabel.Text = $"Value: {val:F0}";
         }
 
-
-
         private void sit_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             double val = ValueConverter(e.NewValue);
@@ -165,10 +146,9 @@ namespace Shimeji_Adjuster
         private bool UpdateBehaviorFrequency(string behaviorName, double frequency)
         {
             XNamespace ns = "http://www.group-finity.com/Mascot";
+            XDocument doc = XDocument.Load(filePath);
 
             frequency = ValueConverter(frequency);
-
-            XDocument doc = XDocument.Load(filePath);
 
             XElement? behavior = doc
                 .Descendants(ns + "Behavior")
@@ -184,14 +164,26 @@ namespace Shimeji_Adjuster
             return true;
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void SaveChanges(object sender, RoutedEventArgs e)
         {
+            // Stealing window actions
             UpdateBehaviorFrequency("ThrowIEFromLeft", slider_throw.Value);
             UpdateBehaviorFrequency("ThrowIEFromRight", slider_throw.Value);
             UpdateBehaviorFrequency("WalkAndThrowIEFromLeft", slider_throw.Value);
             UpdateBehaviorFrequency("WalkAndThrowIEFromRight", slider_throw.Value);
 
+            // Multiplying actions
             UpdateBehaviorFrequency("PullUpShimeji", slider_multiply.Value);
+            UpdateBehaviorFrequency("SplitIntoTwo", slider_multiply.Value);
+
+            // Climbing actions
+            UpdateBehaviorFrequency("ClimbHalfwayAlongWall", slider_throw.Value);
+            UpdateBehaviorFrequency("ClimbAlongWall", slider_throw.Value);
+            UpdateBehaviorFrequency("ClimbIEWall", slider_throw.Value);
+            UpdateBehaviorFrequency("ClimbIEBottom", slider_throw.Value);
+
+            // Sitting
+            UpdateBehaviorFrequency("SitDown", slider_throw.Value);
 
             return;
         }
