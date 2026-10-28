@@ -1,0 +1,29 @@
+﻿<Window x:Class="Shimeji_Adjuster.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Shimeji_Adjuster"
+        mc:Ignorable="d"
+            Title="Behavior Adjuster" Height="600" Width="319">
+    <StackPanel>
+        <Image x:Name="img_shimeji" Height="128" Width="128" Margin="0,10,0,0"/>
+        <Label x:Name="lbl_name" Content="" Margin="0,0,0,0" HorizontalContentAlignment="Center" FontSize="14" FontWeight="Bold"/>
+        <Label x:Name="lbl_sitAn" Content="Sit" HorizontalContentAlignment="Center"/>
+        <Slider x:Name="slider_sittingAnimation" Width="200" ValueChanged="sit_ValueChanged" IsSnapToTickEnabled="True"/>
+        <TextBlock Name="sLabel" HorizontalAlignment="Center" FontSize="10"/>
+        <Label Content="Steal Window" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+        <Slider x:Name="slider_throw" Width="200" ValueChanged="throw_ValueChanged" IsSnapToTickEnabled="True"/>
+        <TextBlock Name="tLabel" HorizontalAlignment="Center" FontSize="10"/>
+        <Label Content="Climb Walls" VerticalAlignment="Top" Margin="0,10,0,0" HorizontalContentAlignment="Center"/>
+        <Slider Name="slider_climb"  Width="200" ValueChanged="climb_ValueChanged" IsSnapToTickEnabled="True"/>
+        <TextBlock Name="cLabel" HorizontalAlignment="Center" FontSize="10"/>
+        <Label Content="Multiply" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+        <Slider x:Name="slider_multiply" Width="200" ValueChanged="multiply_ValueChanged" IsSnapToTickEnabled="True"/>
+        <TextBlock Name="multLabel" HorizontalAlignment="Center" FontSize="10"/>
+        <Label Content="Misc. Animation" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+        <Slider x:Name="slider_misc"  Width="200" ValueChanged="slider_misc_ValueChanged" IsSnapToTickEnabled="True"/>
+        <TextBlock Name="mLabel" HorizontalAlignment="Center" FontSize="10"/>
+        <Button Content="Save" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,20,0,0" Width="75" Height="20" Click="Button_Click"/>
+    </StackPanel>
+</Window>
