@@ -9,21 +9,23 @@ namespace Shimeji_Adjuster
 {
     public partial class MainWindow : Window
     {
-        string? filePath, shimejiIcon, shimejiName;
+        string? shimejiName;
         XDocument doc;
+        Paths paths;
 
         public MainWindow()
         {
             InitializeComponent();
-            SetUp();
+            SetUpGUI();
+
+            paths = new Paths();
+            paths.PopulatePaths();
         }
 
-        public void SetUp()
+        public void SetUpGUI()
         {
             string currentPath = Directory.GetCurrentDirectory();
             string? frequency = "";
-            shimejiIcon = "";
-            filePath = "";
             shimejiName = "";
 
             try
@@ -39,15 +41,25 @@ namespace Shimeji_Adjuster
                 MessageBox.Show("Failed to read current folder.");
             }
 
+            //---Get the actions file---//
+            Files.actionsPath = currentPath + @"\conf\actions.xml";
+            if (!File.Exists(Files.actionsPath))
+                MessageBox.Show("Failed to load actions file: \n" + Files.actionsPath, "Load Failed", MessageBoxButton.OK);
+
+            //---and the settings file---//
+            Files.settingsPath = currentPath + @"\conf\settings.properties";
+            if (!File.Exists(Files.settingsPath))
+                MessageBox.Show("Failed to load settings file: \n" + Files.settingsPath, "Load Failed", MessageBoxButton.OK);
+
             try
             {
                 //---Set the icon---//
-                shimejiIcon = currentPath + @"\img\Shimeji\shime1.png";
-                img_shimeji.Source = new BitmapImage(new Uri(shimejiIcon, UriKind.Absolute));
+                Files.iconPath = currentPath + @"\img\Shimeji\shime1.png";
+                img_shimeji.Source = new BitmapImage(new Uri(Files.iconPath, UriKind.Absolute));
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to load icon: \n" + shimejiIcon, "Load Failed", MessageBoxButton.OK);
+                MessageBox.Show("Failed to load icon: \n" + Files.iconPath, "Load Failed", MessageBoxButton.OK);
             }
 
             try
@@ -55,27 +67,24 @@ namespace Shimeji_Adjuster
                 XElement? behavior = null;
 
                 //---Load the behaviors file---//
-                filePath = currentPath + @"\conf\behaviors.xml";
-                doc = XDocument.Load(filePath);
+                Files.behaviorPath = currentPath + @"\conf\behaviors.xml";
+                doc = XDocument.Load(Files.behaviorPath);
 
                 string behaviorName = "SitDown";
                 behavior = GetBehavior(behaviorName, slider_sittingAnimation);
 
-
                 behaviorName = "ClimbAlongWall";
                 behavior = GetBehavior(behaviorName, slider_climb);
-
 
                 behaviorName = "PullUpShimeji";
                 behavior = GetBehavior(behaviorName, slider_multiply);
 
-
                 behaviorName = "ThrowIEFromLeft";
-                behavior = GetBehavior(behaviorName, slider_misc);
+                behavior = GetBehavior(behaviorName, slider_throw);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to load behaviors file: \n" + filePath, "Load Failed", MessageBoxButton.OK);
+                MessageBox.Show("Failed to load behaviors file: \n" + Files.behaviorPath, "Load Failed", MessageBoxButton.OK);
             }
 
             sLabel.Text = $"Value: {ValueConverter(slider_sittingAnimation.Value):F0}";
@@ -137,6 +146,11 @@ namespace Shimeji_Adjuster
             tLabel.Text = $"Value: {val:F0}";
         }
 
+        private void HandleClosing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            paths.Close();
+        }
+
         private void sit_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             double val = ValueConverter(e.NewValue);
@@ -146,7 +160,7 @@ namespace Shimeji_Adjuster
         private bool UpdateBehaviorFrequency(string behaviorName, double frequency)
         {
             XNamespace ns = "http://www.group-finity.com/Mascot";
-            XDocument doc = XDocument.Load(filePath);
+            XDocument doc = XDocument.Load(Files.behaviorPath);
 
             frequency = ValueConverter(frequency);
 
@@ -159,7 +173,7 @@ namespace Shimeji_Adjuster
                 return false;
 
             behavior.SetAttributeValue("Frequency", frequency);
-            doc.Save(filePath);
+            doc.Save(Files.behaviorPath);
 
             return true;
         }
@@ -186,6 +200,12 @@ namespace Shimeji_Adjuster
             UpdateBehaviorFrequency("SitDown", slider_throw.Value);
 
             return;
+        }
+
+        // Menu bar functions
+        private void SetPaths(object sender, RoutedEventArgs e)
+        {
+            paths.ShowDialog();
         }
     }
 }
